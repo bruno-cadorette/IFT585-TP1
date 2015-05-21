@@ -10,6 +10,16 @@ using System.Threading.Tasks;
 
 namespace UDPClient
 {
+    public class ObjectEventArgs : EventArgs
+    {
+        public StateObject sObject;
+
+        public ObjectEventArgs(StateObject o)
+        {
+            sObject = o;
+        }
+    }
+
     public class StateObject : IUDP
     {   
         private byte[] content;
@@ -51,6 +61,13 @@ namespace UDPClient
         private const int HEADER_SIZE = 9;
         private Dictionary<int, StateObject> states;
         Socket listener;
+
+        public EventHandler<ObjectEventArgs> ObjectCreated { get; set; }
+
+        public IEnumerable<StateObject> GetStates()
+        {
+            return states.Values;
+        }
 
         public Listener(int port)
         {
@@ -102,6 +119,10 @@ namespace UDPClient
 
                 state.FileSize = BitConverter.ToInt32(buffer, HEADER_SIZE);
                 states[currentId] = state;
+
+                if (ObjectCreated != null)
+                    ObjectCreated.Invoke(this, new ObjectEventArgs(state));
+                
                 message.AddRange(BitConverter.GetBytes(id));
             }
             else
