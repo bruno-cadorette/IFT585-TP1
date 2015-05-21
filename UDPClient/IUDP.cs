@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace UDPClient
 {
-    interface IUDP
+    public interface IUDP
     {
         int FileSize { get; set; }
 
-        EventHandler<AckEventArgs> ACKReceived { get; set; }
+        EventHandler<AckEventArgs> PacketReceived { get; set; }
         EventHandler<AckEventArgs> Resended{ get; set; }
     }
 }

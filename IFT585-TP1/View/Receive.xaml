@@ -5,5 +5,11 @@
     <Grid>
         <Label Content="Port" HorizontalAlignment="Left" Margin="10,6,0,0" VerticalAlignment="Top"/>
         <TextBox Text="{Binding Port}" HorizontalAlignment="Left" Height="23" Margin="47,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <ScrollViewer HorizontalAlignment="Left" Height="203" Margin="10,56,0,0" VerticalAlignment="Top" Width="272">
+            <ItemsControl>
+                
+            </ItemsControl>
+            
+        </ScrollViewer>
     </Grid>
 </Window>

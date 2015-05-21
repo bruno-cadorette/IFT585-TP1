@@ -29,32 +29,25 @@ namespace IFT585_TP1
             }
         }
 
-        private int percent = 0;
-        public int ProgressBarPercent
+        public ProgressViewModel ProgressViewModel { get; set; }
+
+        private string log;
+        public string Log
         {
             get
             {
-                return percent;
+                return log;
             }
             set
             {
-                SetProperty(ref percent, value);
-            }
-        }
-
-        public int FileSize 
-        { 
-            get
-            {
-                return sender.FileSize;
+                SetProperty(ref log, value);
             }
         }
         
 
-
-
         IPAddress ipAdress;
-        public string IPAdress {
+        public string IPAdress
+        {
             get
             {
                 return ipAdress.ToString();
@@ -66,16 +59,14 @@ namespace IFT585_TP1
         }
 
         private string filePath;
-        private UDPClientSender sender;
 
-        private readonly BackgroundWorker worker;
 
         private void SelectFileImpl()
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             var result = dlg.ShowDialog();
             
-            if(result.HasValue && result.Value)
+            if (result.HasValue && result.Value)
             {
                 filePath = dlg.FileName;
             }
@@ -83,10 +74,13 @@ namespace IFT585_TP1
 
         private void SendFileImpl()
         {
-            sender = new UDPClientSender(ipAdress, port, filePath);
-            sender.PacketReceived += (o, e) => ProgressBarPercent++;
+            var sender = new UDPClientSender(ipAdress, port, filePath);
+            ProgressViewModel = new ProgressViewModel(sender);
+            sender.Resended += (o, e) => Log += String.Format("{0} : Le packet no {1} a été renvoyé\n", DateTime.Now, e);
             sender.SendFile();
         }
+
+
 
         public SendViewModel()
         {
