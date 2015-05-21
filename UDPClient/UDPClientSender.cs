@@ -16,8 +16,15 @@ namespace UDPClient
     /// 4 byte => file number
     /// 4 byte => offset
     /// </summary>
-    public class UDPClient
+    public class UDPClientSender
     {
+        //Properties
+        public int FileSize
+        {
+            get {return  m_file.Length; }
+        }
+
+        //Members
         private readonly byte[] ackBytes = {1};
         private readonly byte[] dataBytes = { 0 };
         private const int NB_BYTE_PER_SECTION = 2048;
@@ -29,16 +36,20 @@ namespace UDPClient
         private UdpClient udpClient;
         private byte[] m_file;
         private int fileID;
-
         private Dictionary<int, Timer> m_timers; 
 
-        public UDPClient(IPAddress addr, int port)
+
+        //Events
+        public EventHandler ACKReceived;
+
+        public UDPClientSender(IPAddress addr, int port,string path)
         {
             m_timers = new Dictionary<int, Timer>();
             m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,ProtocolType.Udp);
             m_endpoint = new IPEndPoint(addr,port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any,port);
             udpClient = new UdpClient(port);
+            m_file = File.ReadAllBytes(path);        
             fileID = 0;
         }
 
@@ -49,26 +60,23 @@ namespace UDPClient
         /// <returns>succesful</returns>
         public bool SendFile(string path)
         {
-            if (File.Exists(path))
+            //Get byte from file
+            StartTransfer(path);                                    //Start Connection, ask for FileID
+            int nbSection = m_file.Length / NB_BYTE_PER_SECTION;    
+            var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
+            for (int i = 0; i < nbSection; i++)
             {
-                m_file= File.ReadAllBytes(path);                        //Get byte from file
-                StartTransfer(path);                                    //Start Connection, ask for FileID
-                int nbSection = m_file.Length / NB_BYTE_PER_SECTION;    
-                Task.Factory.StartNew(Listen);                          //Listen for ACK
-                for (int i = 0; i < nbSection; i++)
+                try
                 {
-                    try
-                    {
-                        SendSectionAsync(i*NB_BYTE_PER_SECTION);
-                    }
-                    catch
-                    {
-                        return false;
-                    }
+                    SendSectionAsync(i*NB_BYTE_PER_SECTION);
                 }
-                return true;
+                catch
+                {
+                    return false;
+                }
             }
-            return false;
+                
+            return true;
         }
 
         private void StartTransfer(string path)
@@ -116,7 +124,10 @@ namespace UDPClient
                     int off = BitConverter.ToInt32(data, 1);
                     if (m_timers.ContainsKey(off))
                     {
+                        if(ACKReceived != null)
+                            ACKReceived.Invoke(this,new EventArgs());
                         m_timers[off].Dispose();
+                        m_timers.Remove(off);
                     }
                 }
 
