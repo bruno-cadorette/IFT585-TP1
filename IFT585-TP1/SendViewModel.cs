@@ -84,7 +84,7 @@ namespace IFT585_TP1
         private void SendFileImpl()
         {
             sender = new UDPClientSender(ipAdress, port, filePath);
-            sender.ACKReceived += (o, e) => ProgressBarPercent++;
+            sender.PacketReceived += (o, e) => ProgressBarPercent++;
             sender.SendFile();
         }
 

@@ -10,21 +10,31 @@ using System.Threading.Tasks;
 
 namespace UDPClient
 {
+
+    public class AckEventArgs : EventArgs
+    {
+        public int OffSet;
+
+        public AckEventArgs(int o)
+        {
+            OffSet = o;
+        }
+    }
+
     /// <summary>
     /// RFB Protocol
     /// 1 byte => 1 == ACK, 0 == DATA
     /// 4 byte => file number
     /// 4 byte => offset
     /// </summary>
-    public class UDPClientSender
+    public class UDPClientSender : IUDP
     {
         //Properties
-        public int FileSize
-        {
-            get {return  m_file.Length; }
-        }
-
         public string FilePath { get; set; }
+
+        public int FileSize { get; set; }
+        public EventHandler<AckEventArgs> PacketReceived { get; set; }
+        public EventHandler<AckEventArgs> Resended { get; set; }
 
         //Members
         private readonly byte[] ackBytes = {1};
@@ -38,12 +48,8 @@ namespace UDPClient
         private UdpClient udpClient;
         private byte[] m_file;
         private int fileID;
-        private Dictionary<int, Timer> m_timers; 
+        private Dictionary<int, Timer> m_timers;
 
-
-        //Events
-        public EventHandler ACKReceived;
-        public EventHandler Resended;
 
         public UDPClientSender(IPAddress addr, int port,string path)
         {
@@ -52,7 +58,8 @@ namespace UDPClient
             m_endpoint = new IPEndPoint(addr,port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any,port);
             udpClient = new UdpClient(port);
-            m_file = File.ReadAllBytes(path);        
+            m_file = File.ReadAllBytes(path);
+            FileSize = m_file.Length;
             fileID = 0;
             FilePath = path;
         }
@@ -110,7 +117,7 @@ namespace UDPClient
         /// </summary>
         /// <param name="file">Byte of the file</param>
         /// <param name="offSet"></param>
-        private async void SendSectionAsync(int offSet)
+        private void SendSectionAsync(int offSet)
         {
             var section = m_file.Skip(offSet).Take(NB_BYTE_PER_SECTION).ToList(); // Data
             var byteOffset = BitConverter.GetBytes(offSet);
@@ -126,7 +133,7 @@ namespace UDPClient
         {
             if (Resended != null)
             {
-                Resended.Invoke(this, new EventArgs());
+                Resended.Invoke(this, new AckEventArgs((int)state));
             }
             SendSectionAsync((int)state);
         }
@@ -141,8 +148,8 @@ namespace UDPClient
                     int off = BitConverter.ToInt32(data, 1);
                     if (m_timers.ContainsKey(off))
                     {
-                        if(ACKReceived != null)
-                            ACKReceived.Invoke(this,new EventArgs());
+                        if(PacketReceived != null)
+                            PacketReceived.Invoke(this,new AckEventArgs(off));
                         m_timers[off].Dispose();
                         m_timers.Remove(off);
                         if (!m_timers.Any())
@@ -165,5 +172,7 @@ namespace UDPClient
             var data = ackBytes.Concat(BitConverter.GetBytes(fileID));
             m_socket.SendTo(data.ToArray(), m_endpoint);
         }
+
+
     }
 }
