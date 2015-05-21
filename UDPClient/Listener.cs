@@ -10,16 +10,45 @@ using System.Threading.Tasks;
 
 namespace UDPClient
 {
-    public class StateObject
+    public class StateObject : IUDP
     {   
-        public byte[] content;
-    }
+        private byte[] content;
+        private int fileSize;
+
+        public EventHandler<AckEventArgs> PacketReceived { get; set; }
+        public EventHandler<AckEventArgs> Resended { get; set; }
+
+        public void UpdateContent(byte[] bytes, int offset, int size)
+        {
+            for (int i = 0; i < size; i++)
+                content[i + offset] = bytes[i];
+
+            if (PacketReceived != null)
+                PacketReceived.Invoke(this, new AckEventArgs(offset));
+        }
+
+        public byte[] Content
+        {
+            get { return content; }
+        }
+
+        public int FileSize
+        {
+            get { return fileSize; }
+            set 
+            {
+                fileSize = value;
+                content = new byte[fileSize];
+            }
+        }
+}
 
     public class Listener
     {
-        private int id = 1;
+        private int id = 0;
         IPEndPoint localEndPoint;
         private const int NB_BYTE_PER_SECTION = 2064;
+        private const int HEADER_SIZE = 9;
         private Dictionary<int, StateObject> states;
         Socket listener;
 
@@ -35,7 +64,7 @@ namespace UDPClient
             states = new Dictionary<int, StateObject>();
 
             listener = new Socket(AddressFamily.InterNetwork,
-                SocketType.Stream, ProtocolType.Udp);
+                SocketType.Dgram , ProtocolType.Udp);
 
             try
             {
@@ -57,9 +86,9 @@ namespace UDPClient
             }
         }
 
-        public void Listen(byte[] buffer, int size, EndPoint endpoint)
+        private void Listen(byte[] buffer, int size, EndPoint endpoint)
         {
-            if (size < 9)
+            if (size < HEADER_SIZE)
                 return;
 
             StateObject state;
@@ -69,29 +98,20 @@ namespace UDPClient
             if (currentId == 0)
             {
                 state = new StateObject();
-                currentId = id;
-                id++;
+                currentId = ++id;
 
-                state.content = new byte[BitConverter.ToInt32(buffer, 9)];
+                state.FileSize = BitConverter.ToInt32(buffer, HEADER_SIZE);
                 states[currentId] = state;
-
                 message.AddRange(BitConverter.GetBytes(id));
             }
             else
             {
                 state = states[currentId];
-
                 if (buffer[0] == 1)
-                    File.WriteAllBytes("TEST" + id + ".txt", state.content);
+                    File.WriteAllBytes("TEST" + id + ".txt", state.Content);
                 else
-                {
-                    int offset = BitConverter.ToInt32(buffer, 5);
-
-                    for (int i = 0; i < size - 9; i++)
-                        state.content[i + offset] = buffer[i];
-                }
+                    state.UpdateContent(buffer, BitConverter.ToInt32(buffer, 5), size - HEADER_SIZE);
             }
-
             listener.SendTo(message.ToArray(), endpoint);
         }
     }

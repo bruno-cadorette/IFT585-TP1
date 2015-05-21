@@ -42,7 +42,6 @@ namespace UDPClient
         private const int NB_BYTE_PER_SECTION = 2048;
         private const long TIMEOUT = 5000;
         private Socket m_socket;
-        private Socket listeningSocket;
         private IPEndPoint m_endpoint;
         private IPEndPoint listeninEndPoint;
         private UdpClient udpClient;
