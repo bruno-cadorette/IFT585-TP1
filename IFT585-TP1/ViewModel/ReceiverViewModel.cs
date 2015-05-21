@@ -59,9 +59,13 @@ namespace IFT585_TP1.ViewModel
 
         public ReceiverViewModel()
         {
-            Listen = new ActionCommand(() => { 
-                listener = new Listener(port);
-                listener.StartListening();
+            Listen = new ActionCommand(() =>
+            {
+                Task.Factory.StartNew(() =>
+                    {
+                        listener = new Listener(port);
+                        listener.StartListening();
+                    });
             });
             DownloadingFiles = new ObservableCollection<ProgressViewModel>()
             {
