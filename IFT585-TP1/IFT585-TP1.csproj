@@ -57,6 +57,7 @@
     <Compile Include="Helper\ActionCommand.cs" />
     <Compile Include="Helper\BindableBase.cs" />
     <Compile Include="ViewModel\ProgressViewModel.cs" />
+    <Compile Include="ViewModel\ReceiverViewModel.cs" />
     <Compile Include="View\Receive.xaml.cs">
       <DependentUpon>Receive.xaml</DependentUpon>
     </Compile>

@@ -24,5 +24,19 @@ namespace IFT585_TP1
         {
             InitializeComponent();
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new Send();
+            window.Show();
+            this.Close();
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            var window = new Receive();
+            window.Show();
+            this.Close();
+        }
     }
 }

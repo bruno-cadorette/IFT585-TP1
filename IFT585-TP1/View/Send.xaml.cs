@@ -19,12 +19,10 @@ namespace IFT585_TP1
     /// </summary>
     public partial class Send : Window
     {
-        private SendViewModel sendViewModel { get; set; }
         public Send()
         {
             InitializeComponent();
-            sendViewModel = new SendViewModel();
-            this.DataContext = sendViewModel;
+            this.DataContext = new SendViewModel();
         }
     }
 }

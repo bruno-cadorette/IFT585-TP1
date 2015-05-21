@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IFT585_TP1.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,11 @@ namespace IFT585_TP1
     /// </summary>
     public partial class Receive : Window
     {
+
         public Receive()
         {
             InitializeComponent();
+            DataContext = new ReceiverViewModel();
         }
     }
 }

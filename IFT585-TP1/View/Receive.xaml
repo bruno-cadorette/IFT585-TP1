@@ -6,10 +6,16 @@
         <Label Content="Port" HorizontalAlignment="Left" Margin="10,6,0,0" VerticalAlignment="Top"/>
         <TextBox Text="{Binding Port}" HorizontalAlignment="Left" Height="23" Margin="47,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
         <ScrollViewer HorizontalAlignment="Left" Height="203" Margin="10,56,0,0" VerticalAlignment="Top" Width="272">
-            <ItemsControl>
-                
+            <ItemsControl ItemsSource="{Binding DownloadingFiles}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ProgressBar Minimum="0" Value="{Binding ProgressBarPercent}" Maximum="{Binding FileSize}" 
+                                     HorizontalAlignment="Left" Height="20" Margin="0,5,0,0" VerticalAlignment="Top" Width="272"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
             </ItemsControl>
-            
+
         </ScrollViewer>
+        <Button Command="{Binding Listen}" Content="Écouter" HorizontalAlignment="Left" Margin="172,10,0,0" VerticalAlignment="Top" Width="80" Height="23"/>
     </Grid>
 </Window>
