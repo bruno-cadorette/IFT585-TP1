@@ -1,0 +1,9 @@
+﻿<Window x:Class="IFT585_TP1.Receive"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Receive" Height="300" Width="300">
+    <Grid>
+        <Label Content="Port" HorizontalAlignment="Left" Margin="10,6,0,0" VerticalAlignment="Top"/>
+        <TextBox Text="{Binding Port}" HorizontalAlignment="Left" Height="23" Margin="47,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+    </Grid>
+</Window>
