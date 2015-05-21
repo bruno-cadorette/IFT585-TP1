@@ -24,6 +24,8 @@ namespace UDPClient
             get {return  m_file.Length; }
         }
 
+        public string FilePath { get; set; }
+
         //Members
         private readonly byte[] ackBytes = {1};
         private readonly byte[] dataBytes = { 0 };
@@ -51,6 +53,7 @@ namespace UDPClient
             udpClient = new UdpClient(port);
             m_file = File.ReadAllBytes(path);        
             fileID = 0;
+            FilePath = path;
         }
 
         /// <summary>
@@ -58,10 +61,10 @@ namespace UDPClient
         /// </summary>
         /// <param name="path">path to send</param>
         /// <returns>succesful</returns>
-        public bool SendFile(string path)
+        public bool SendFile()
         {
             //Get byte from file
-            StartTransfer(path);                                    //Start Connection, ask for FileID
+            StartTransfer(FilePath);                                    //Start Connection, ask for FileID
             int nbSection = m_file.Length / NB_BYTE_PER_SECTION;    
             var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
             for (int i = 0; i < nbSection; i++)
