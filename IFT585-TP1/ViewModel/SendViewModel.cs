@@ -43,7 +43,7 @@ namespace IFT585_TP1
                 SetProperty(ref log, value);
             }
         }
-
+        
 
         IPAddress ipAdress;
         public string IPAdress
@@ -65,7 +65,7 @@ namespace IFT585_TP1
         {
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             var result = dlg.ShowDialog();
-
+            
             if (result.HasValue && result.Value)
             {
                 filePath = dlg.FileName;

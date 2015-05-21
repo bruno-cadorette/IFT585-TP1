@@ -26,16 +26,16 @@ namespace IFT585_TP1
         {
             get
             {
-                return sender.FileSize;
+                return udp.FileSize;
             }
         }
 
-        private UDPClientSender sender;
+        private IUDP udp;
 
-        public ProgressViewModel(UDPClientSender sender)
+        public ProgressViewModel(IUDP udp)
         {
-            this.sender = sender;
-            this.sender.ACKReceived += (o, e) => ProgressBarPercent++;
+            this.udp = udp;
+            this.udp.PacketReceived += (o, e) => ProgressBarPercent++;
         }
     }
 }
