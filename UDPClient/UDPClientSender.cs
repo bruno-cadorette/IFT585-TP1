@@ -33,7 +33,7 @@ namespace UDPClient
         public string FilePath { get; set; }
 
         public int FileSize { get; set; }
-        public EventHandler<AckEventArgs> PacketReceived { get; set; }
+        public EventHandler<AckEventArgs> ACKReceived { get; set; }
         public EventHandler<AckEventArgs> Resended { get; set; }
 
         //Members

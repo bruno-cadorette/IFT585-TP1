@@ -11,7 +11,7 @@ namespace UDPClient
     {
         int FileSize { get; set; }
 
-        EventHandler<AckEventArgs> PacketReceived { get; set; }
+        EventHandler<AckEventArgs> ACKReceived { get; set; }
         EventHandler<AckEventArgs> Resended{ get; set; }
     }
 }
