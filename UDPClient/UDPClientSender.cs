@@ -43,6 +43,7 @@ namespace UDPClient
 
         //Events
         public EventHandler ACKReceived;
+        public EventHandler Resended;
 
         public UDPClientSender(IPAddress addr, int port,string path)
         {
@@ -82,10 +83,19 @@ namespace UDPClient
             return true;
         }
 
+        /// <summary>
+        /// First Transmission
+        /// 1 byte => DATA
+        /// 4 byte => FileID
+        /// 4 byte => File Size
+        /// X Byte => File Name
+        /// </summary>
+        /// <param name="path"></param>
         private void StartTransfer(string path)
         {
             string fileName = Path.GetFileName(path);
             byte[] data = dataBytes.Concat(BitConverter.GetBytes(fileID)).ToArray();        //ConCat DATA + fileID (0)
+            data = data.Concat(BitConverter.GetBytes(FileSize)).ToArray();
             data = data.Concat(Encoding.ASCII.GetBytes(fileName)).ToArray();                //Concat FileName
             m_socket.SendTo(data, m_endpoint);                                              //Send
 
@@ -114,6 +124,10 @@ namespace UDPClient
 
         private void Resend(object state)
         {
+            if (Resended != null)
+            {
+                Resended.Invoke(this, new EventArgs());
+            }
             SendSectionAsync((int)state);
         }
 
@@ -131,11 +145,25 @@ namespace UDPClient
                             ACKReceived.Invoke(this,new EventArgs());
                         m_timers[off].Dispose();
                         m_timers.Remove(off);
+                        if (!m_timers.Any())
+                        {
+                            SendFinalAck();
+                        }
                     }
                 }
 
             }
 
+        }
+
+        /// <summary>
+        /// 1 byte => ACK
+        /// 4 byte => FileID
+        /// </summary>
+        private void SendFinalAck()
+        {
+            var data = ackBytes.Concat(BitConverter.GetBytes(fileID));
+            m_socket.SendTo(data.ToArray(), m_endpoint);
         }
     }
 }
