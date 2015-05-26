@@ -64,7 +64,6 @@ namespace UDPClient
             m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             m_endpoint = new IPEndPoint(addr, port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any, 0);
-            udpClient = new UdpClient(port);
             m_file = File.ReadAllBytes(path);
             FileSize = m_file.Length;
             fileID = 0;
@@ -82,9 +81,12 @@ namespace UDPClient
             StartTransfer(FilePath);                                    //Start Connection, ask for FileID
             int nbSection = m_file.Length / NB_BYTE_PER_SECTION;
             var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
-            for (int i = 0; i < nbSection; i++)
+            for (int i = 0; i <= nbSection; i++)
             {
-                while (packetSendedNotAck >= WINDOW_SIZE) { }//WAIT for ACK
+                while (packetSendedNotAck >= WINDOW_SIZE)
+                {
+                    
+                }//WAIT for ACK
                 SendSectionAsync(i * NB_BYTE_PER_SECTION);
                 lock (windowSyncRoot)
                 {
@@ -151,7 +153,7 @@ namespace UDPClient
                 var data = new byte[NB_BYTE_PER_SECTION + HEADER];
                 EndPoint endpoint = listeninEndPoint;
                 int size = m_socket.ReceiveFrom(data, ref endpoint);
-                fileID = BitConverter.ToInt32(data, 1);                //FileID for this file is known
+                //fileID = BitConverter.ToInt32(data, 1);                //FileID for this file is known
                 if (data[0] == 1)
                 {
                     int off = BitConverter.ToInt32(data, 1);
@@ -182,7 +184,7 @@ namespace UDPClient
         /// </summary>
         private void SendFinalAck()
         {
-            var data = ackBytes.Concat(BitConverter.GetBytes(fileID));
+            var data = ackBytes.Concat(BitConverter.GetBytes(fileID)).Concat(BitConverter.GetBytes(fileID));
             m_socket.SendTo(data.ToArray(), m_endpoint);
         }
 
