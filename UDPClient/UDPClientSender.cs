@@ -40,6 +40,7 @@ namespace UDPClient
         private readonly byte[] ackBytes = {1};
         private readonly byte[] dataBytes = { 0 };
         private const int NB_BYTE_PER_SECTION = 2048;
+        private const int WINDOW_SIZE = 30;
         private const long TIMEOUT = 5000;
         private Socket m_socket;
         private IPEndPoint m_endpoint;
@@ -47,7 +48,11 @@ namespace UDPClient
         private UdpClient udpClient;
         private byte[] m_file;
         private int fileID;
+        private int packetSendedNotAck = 0;
         private Dictionary<int, Timer> m_timers;
+
+        //Threading lock
+        object windowSyncRoot = new object();
 
 
         public UDPClientSender(IPAddress addr, int port,string path)
@@ -76,9 +81,14 @@ namespace UDPClient
             var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
             for (int i = 0; i < nbSection; i++)
             {
+                while (packetSendedNotAck >= WINDOW_SIZE) { }//WAIT for ACK
                 try
                 {
                     SendSectionAsync(i*NB_BYTE_PER_SECTION);
+                    lock (windowSyncRoot)
+                    {
+                        packetSendedNotAck++;
+                    }
                 }
                 catch
                 {
@@ -149,6 +159,10 @@ namespace UDPClient
                     {
                         if(PacketReceived != null)
                             PacketReceived.Invoke(this,new AckEventArgs(off));
+                        lock (windowSyncRoot)
+                        {
+                            packetSendedNotAck--;
+                        }
                         m_timers[off].Dispose();
                         m_timers.Remove(off);
                         if (!m_timers.Any())
