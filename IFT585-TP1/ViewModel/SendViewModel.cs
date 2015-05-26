@@ -84,6 +84,7 @@ namespace IFT585_TP1
 
         public SendViewModel()
         {
+            ipAdress = IPAddress.None;
             SelectFile = new ActionCommand(SelectFileImpl);
             SendFile = new ActionCommand(() => Task.Factory.StartNew(SendFileImpl));
         }

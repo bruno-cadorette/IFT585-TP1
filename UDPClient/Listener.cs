@@ -86,7 +86,6 @@ namespace UDPClient
             try
             {
                 listener.Bind(localEndPoint);
-                //listener.Listen(100);
 
                 while (true)
                 {

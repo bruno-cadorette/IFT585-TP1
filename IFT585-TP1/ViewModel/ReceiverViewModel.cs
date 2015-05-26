@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -40,6 +42,15 @@ namespace IFT585_TP1.ViewModel
             }
         }
 
+        public string OwnIPAdress
+        {
+            get
+            {
+                return Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
+
+            }
+        }
+
         public ICommand Listen { get; private set; }
 
         private int port;
@@ -65,14 +76,10 @@ namespace IFT585_TP1.ViewModel
                     {
                         listener = new Listener(port);
                         listener.StartListening();
+                        listener.ObjectCreated += (o, e) => DownloadingFiles.Add(new ProgressViewModel(e.sObject));
                     });
             });
-            DownloadingFiles = new ObservableCollection<ProgressViewModel>()
-            {
-                new ProgressViewModel(new Udp()),
-                new ProgressViewModel(new Udp()),
-                new ProgressViewModel(new Udp())
-            };
+            DownloadingFiles = new ObservableCollection<ProgressViewModel>();
         }
 
     }

@@ -5,7 +5,7 @@
     <Grid>
         <Label Content="Port" HorizontalAlignment="Left" Margin="10,6,0,0" VerticalAlignment="Top"/>
         <TextBox Text="{Binding Port}" HorizontalAlignment="Left" Height="23" Margin="47,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <ScrollViewer HorizontalAlignment="Left" Height="203" Margin="10,56,0,0" VerticalAlignment="Top" Width="272">
+        <ScrollViewer HorizontalAlignment="Left" Height="179" Margin="10,80,0,0" VerticalAlignment="Top" Width="272">
             <ItemsControl ItemsSource="{Binding DownloadingFiles}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -17,5 +17,6 @@
 
         </ScrollViewer>
         <Button Command="{Binding Listen}" Content="Écouter" HorizontalAlignment="Left" Margin="172,10,0,0" VerticalAlignment="Top" Width="80" Height="23"/>
+        <Label Content="{Binding OwnIPAdress}" HorizontalAlignment="Left" Margin="10,37,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Window>
