@@ -58,7 +58,7 @@ namespace UDPClient
         private int id = 0;
         IPEndPoint localEndPoint;
         private const int NB_BYTE_PER_SECTION = 2064;
-        private const int HEADER_SIZE = 9;
+        private const int HEADER_SIZE = 5;
         private Dictionary<int, StateObject> states;
         Socket listener;
 
