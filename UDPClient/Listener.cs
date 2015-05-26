@@ -58,7 +58,8 @@ namespace UDPClient
         private int id = 0;
         IPEndPoint localEndPoint;
         private const int NB_BYTE_PER_SECTION = 2064;
-        private const int HEADER_SIZE = 5;
+        private const int FILE_LENGTH = 5;
+        private const int HEADER_SIZE = 9;
         private Dictionary<int, StateObject> states;
         Socket listener;
 
@@ -116,7 +117,7 @@ namespace UDPClient
                 state = new StateObject();
                 currentId = ++id;
 
-                state.FileSize = BitConverter.ToInt32(buffer, HEADER_SIZE);
+                state.FileSize = BitConverter.ToInt32(buffer, FILE_LENGTH);
                 states[currentId] = state;
 
                 if (ObjectCreated != null)

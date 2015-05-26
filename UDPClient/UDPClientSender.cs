@@ -40,6 +40,8 @@ namespace UDPClient
         private readonly byte[] ackBytes = { 1 };
         private readonly byte[] dataBytes = { 0 };
         private const int NB_BYTE_PER_SECTION = 2048;
+        private const int FILE_LENGTH = 5;
+        private const int HEADER = 9;
         private const int WINDOW_SIZE = 30;
         private const long TIMEOUT = 5000;
         private Socket m_socket;
@@ -50,7 +52,6 @@ namespace UDPClient
         private int fileID;
         private int packetSendedNotAck = 0;
         private Dictionary<int, Timer> m_timers;
-        private Socket listener;
 
 
         //Threading lock
@@ -61,7 +62,6 @@ namespace UDPClient
         {
             m_timers = new Dictionary<int, Timer>();
             m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            listener = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             m_endpoint = new IPEndPoint(addr, port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any, 0);
             udpClient = new UdpClient(port);
@@ -69,7 +69,6 @@ namespace UDPClient
             FileSize = m_file.Length;
             fileID = 0;
             FilePath = path;
-            listener.Bind(listeninEndPoint);
         }
 
         /// <summary>
@@ -112,7 +111,7 @@ namespace UDPClient
 
             var listenerData =  new byte[NB_BYTE_PER_SECTION + 5];
             EndPoint endpoint = listeninEndPoint;
-            int size = listener.ReceiveFrom(listenerData, ref endpoint);
+            int size = m_socket.ReceiveFrom(listenerData, ref endpoint);
             fileID = BitConverter.ToInt32(listenerData, 1);                //FileID for this file is known
 
         }
@@ -148,7 +147,11 @@ namespace UDPClient
         {
             while (true)
             {
-                byte[] data = udpClient.Receive(ref listeninEndPoint); //Sync Call
+
+                var data = new byte[NB_BYTE_PER_SECTION + HEADER];
+                EndPoint endpoint = listeninEndPoint;
+                int size = m_socket.ReceiveFrom(data, ref endpoint);
+                fileID = BitConverter.ToInt32(data, 1);                //FileID for this file is known
                 if (data[0] == 1)
                 {
                     int off = BitConverter.ToInt32(data, 1);
