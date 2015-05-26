@@ -16,7 +16,7 @@ namespace IFT585_TP1
 
         public ICommand SendFile { get; private set; }
 
-        private int port;
+        private int port = 50020;
         public int Port
         {
             get
@@ -43,9 +43,9 @@ namespace IFT585_TP1
                 SetProperty(ref log, value);
             }
         }
-        
 
-        IPAddress ipAdress;
+
+        IPAddress ipAdress = IPAddress.Parse("25.44.91.16");
         public string IPAdress
         {
             get
@@ -84,7 +84,6 @@ namespace IFT585_TP1
 
         public SendViewModel()
         {
-            ipAdress = IPAddress.None;
             SelectFile = new ActionCommand(SelectFileImpl);
             SendFile = new ActionCommand(() => Task.Factory.StartNew(SendFileImpl));
         }

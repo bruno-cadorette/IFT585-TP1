@@ -37,7 +37,7 @@ namespace UDPClient
         public EventHandler<AckEventArgs> Resended { get; set; }
 
         //Members
-        private readonly byte[] ackBytes = {1};
+        private readonly byte[] ackBytes = { 1 };
         private readonly byte[] dataBytes = { 0 };
         private const int NB_BYTE_PER_SECTION = 2048;
         private const int WINDOW_SIZE = 30;
@@ -50,22 +50,26 @@ namespace UDPClient
         private int fileID;
         private int packetSendedNotAck = 0;
         private Dictionary<int, Timer> m_timers;
+        private Socket listener;
+
 
         //Threading lock
         object windowSyncRoot = new object();
 
 
-        public UDPClientSender(IPAddress addr, int port,string path)
+        public UDPClientSender(IPAddress addr, int port, string path)
         {
             m_timers = new Dictionary<int, Timer>();
-            m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,ProtocolType.Udp);
-            m_endpoint = new IPEndPoint(addr,port);
-            listeninEndPoint = new IPEndPoint(IPAddress.Any,port);
+            m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            listener = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            m_endpoint = new IPEndPoint(addr, port);
+            listeninEndPoint = new IPEndPoint(IPAddress.Any, 0);
             udpClient = new UdpClient(port);
             m_file = File.ReadAllBytes(path);
             FileSize = m_file.Length;
             fileID = 0;
             FilePath = path;
+            listener.Bind(listeninEndPoint);
         }
 
         /// <summary>
@@ -73,30 +77,21 @@ namespace UDPClient
         /// </summary>
         /// <param name="path">path to send</param>
         /// <returns>succesful</returns>
-        public bool SendFile()
+        public void SendFile()
         {
             //Get byte from file
             StartTransfer(FilePath);                                    //Start Connection, ask for FileID
-            int nbSection = m_file.Length / NB_BYTE_PER_SECTION;    
+            int nbSection = m_file.Length / NB_BYTE_PER_SECTION;
             var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
             for (int i = 0; i < nbSection; i++)
             {
                 while (packetSendedNotAck >= WINDOW_SIZE) { }//WAIT for ACK
-                try
+                SendSectionAsync(i * NB_BYTE_PER_SECTION);
+                lock (windowSyncRoot)
                 {
-                    SendSectionAsync(i*NB_BYTE_PER_SECTION);
-                    lock (windowSyncRoot)
-                    {
-                        packetSendedNotAck++;
-                    }
-                }
-                catch
-                {
-                    return false;
+                    packetSendedNotAck++;
                 }
             }
-                
-            return true;
         }
 
         /// <summary>
@@ -110,13 +105,15 @@ namespace UDPClient
         private void StartTransfer(string path)
         {
             string fileName = Path.GetFileName(path);
-            byte[] data = dataBytes.Concat(BitConverter.GetBytes(fileID)).ToArray();        //ConCat DATA + fileID (0)
-            data = data.Concat(BitConverter.GetBytes(FileSize)).ToArray();
-            data = data.Concat(Encoding.ASCII.GetBytes(fileName)).ToArray();                //Concat FileName
+            byte[] data = dataBytes.Concat(BitConverter.GetBytes(fileID))       //Concat DATA + fileID (0)
+                .Concat(BitConverter.GetBytes(FileSize))
+                .Concat(Encoding.ASCII.GetBytes(fileName)).ToArray();           //Concat FileName
             m_socket.SendTo(data, m_endpoint);                                              //Send
 
-            byte[] receivedBytes = udpClient.Receive(ref listeninEndPoint); // Wait for Server to give a File ID
-            fileID = BitConverter.ToInt32(receivedBytes, 1);                //FileID for this file is known
+            var listenerData =  new byte[NB_BYTE_PER_SECTION + 5];
+            EndPoint endpoint = listeninEndPoint;
+            int size = listener.ReceiveFrom(listenerData, ref endpoint);
+            fileID = BitConverter.ToInt32(listenerData, 1);                //FileID for this file is known
 
         }
 
@@ -130,11 +127,11 @@ namespace UDPClient
         {
             var section = m_file.Skip(offSet).Take(NB_BYTE_PER_SECTION).ToList(); // Data
             var byteOffset = BitConverter.GetBytes(offSet);
-            section.InsertRange(0, byteOffset) ;                                // OFFSET
+            section.InsertRange(0, byteOffset);                                // OFFSET
             section = BitConverter.GetBytes(fileID).Concat(section).ToList();   // File ID
             section = dataBytes.Concat(section).ToList();                       // ACK or DATA
-            m_socket.SendTo(section.ToArray(),m_endpoint);
-            Timer timer = new Timer(Resend,offSet,TIMEOUT,Timeout.Infinite);
+            m_socket.SendTo(section.ToArray(), m_endpoint);
+            Timer timer = new Timer(Resend, offSet, TIMEOUT, Timeout.Infinite);
             m_timers[offSet] = timer;
         }
 
@@ -157,8 +154,8 @@ namespace UDPClient
                     int off = BitConverter.ToInt32(data, 1);
                     if (m_timers.ContainsKey(off))
                     {
-                        if(PacketReceived != null)
-                            PacketReceived.Invoke(this,new AckEventArgs(off));
+                        if (PacketReceived != null)
+                            PacketReceived.Invoke(this, new AckEventArgs(off));
                         lock (windowSyncRoot)
                         {
                             packetSendedNotAck--;
