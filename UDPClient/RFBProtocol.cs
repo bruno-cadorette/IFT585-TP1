@@ -41,9 +41,9 @@ namespace UDPClient
                 Offset = (ID == 0) ? 0 : BitConverter.ToInt32(buffer, 5);
             }
         }
-        public static const int NB_BYTE_PER_SECTION = 2064;
-        public static const int FILE_LENGTH = 5;
-        public static const int HEADER_SIZE = 9;
+        public const int NB_BYTE_PER_SECTION = 2064;
+        public const int FILE_LENGTH = 5;
+        public const int HEADER_SIZE = 9;
 
         public byte[] Data { get; private set; }
         public Header PacketHeader { get; private set; }
