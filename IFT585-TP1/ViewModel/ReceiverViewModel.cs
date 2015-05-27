@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using UDPClient;
 
@@ -66,21 +67,38 @@ namespace IFT585_TP1.ViewModel
             }
         }
 
+        private string listeningMessage;
+        public string ListeningMessage
+        {
+            get
+            {
+                return listeningMessage;
+            }
+            set
+            {
+                SetProperty(ref listeningMessage, value);
+            }
+        }
+
+        private void ObjectCreated(object obj, ObjectEventArgs e)
+        {
+            Application.Current.Dispatcher.Invoke(() => DownloadingFiles.Add(new ProgressViewModel(e.sObject)));
+        }
+
         private Listener listener;
 
         public ReceiverViewModel()
         {
+            DownloadingFiles = new ObservableCollection<ProgressViewModel>();
             Listen = new ActionCommand(() =>
             {
                 Task.Factory.StartNew(() =>
                     {
                         listener = new Listener(port);
+                        listener.ObjectCreated += ObjectCreated;
                         listener.StartListening();
-                        listener.ObjectCreated += (o, e) => DownloadingFiles.Add(new ProgressViewModel(e.sObject));
                     });
             });
-            DownloadingFiles = new ObservableCollection<ProgressViewModel>();
         }
-
     }
 }

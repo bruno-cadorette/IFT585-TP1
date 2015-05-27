@@ -153,10 +153,10 @@ namespace UDPClient
                 var data = new byte[NB_BYTE_PER_SECTION + HEADER];
                 EndPoint endpoint = listeninEndPoint;
                 int size = m_socket.ReceiveFrom(data, ref endpoint);
-                //fileID = BitConverter.ToInt32(data, 1);                //FileID for this file is known
-                if (data[0] == 1)
+                var protocol = RFBProtocol.Decode(data, RFBProtocol.HEADER_SIZE);
+                if (protocol.PacketHeader.IsAck)
                 {
-                    int off = BitConverter.ToInt32(data, 1);
+                    int off = protocol.PacketHeader.Offset;
                     if (m_timers.ContainsKey(off))
                     {
                         if (PacketReceived != null)

@@ -21,7 +21,7 @@ namespace UDPClient
     }
 
     public class StateObject : IUDP
-    {   
+    {
         private byte[] content;
         private int fileSize;
 
@@ -42,16 +42,18 @@ namespace UDPClient
             get { return content; }
         }
 
+        public string FileName { get; set; }
+
         public int FileSize
         {
             get { return fileSize; }
-            set 
+            set
             {
                 fileSize = value;
                 content = new byte[fileSize];
             }
         }
-}
+    }
 
     public class Listener
     {
@@ -82,7 +84,7 @@ namespace UDPClient
             states = new Dictionary<int, StateObject>();
 
             listener = new Socket(AddressFamily.InterNetwork,
-                SocketType.Dgram , ProtocolType.Udp);
+                SocketType.Dgram, ProtocolType.Udp);
 
             try
             {
@@ -99,40 +101,43 @@ namespace UDPClient
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                throw e;
             }
         }
 
         private void Listen(byte[] buffer, int size, EndPoint endpoint)
         {
-            if (size < HEADER_SIZE)
-                return;
 
             StateObject state;
-            List<byte> message = new List<byte>() {1};
+            var protocol = RFBProtocol.Decode(buffer, size);
 
-            int currentId = BitConverter.ToInt32(buffer, 1);
-            if (currentId == 0)
+            List<byte> message = new List<byte>() { 1 };
+
+            if (protocol.PacketHeader.ID == 0)
             {
-                state = new StateObject();
-                currentId = ++id;
-
-                state.FileSize = BitConverter.ToInt32(buffer, FILE_LENGTH);
-                states[currentId] = state;
+                ++id;
+                state = new StateObject()
+                {
+                    FileSize = BitConverter.ToInt32(protocol.Data, RFBProtocol.FILE_LENGTH),
+                    FileName = System.Text.Encoding.Default.GetString(protocol.Data,RFBProtocol.HEADER_SIZE,protocol.Size)
+                };
+                states[id] = state;
 
                 if (ObjectCreated != null)
                     ObjectCreated.Invoke(this, new ObjectEventArgs(state));
-                
+
                 message.AddRange(BitConverter.GetBytes(id));
             }
             else
             {
-                state = states[currentId];
-                if (buffer[0] == 1)
-                    File.WriteAllBytes("TEST" + id + ".txt", state.Content);
+                state = states[protocol.PacketHeader.ID];
+                message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.ID));
+                if (protocol.PacketHeader.IsAck)
+                    File.WriteAllBytes("C:\\Users\\Bruno\\Documents\\TEST" + id + ".txt", state.Content);
                 else
-                    state.UpdateContent(buffer, BitConverter.ToInt32(buffer, 5), size - HEADER_SIZE);
+                    state.UpdateContent(protocol.Data, protocol.PacketHeader.Offset, protocol.Size);
             }
+
             listener.SendTo(message.ToArray(), endpoint);
         }
     }
