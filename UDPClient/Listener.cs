@@ -187,7 +187,7 @@ namespace UDPClient
                 else
                     state.UpdateContent(protocol.Data, protocol.PacketHeader.Offset, protocol.Size);
             }
-
+            Log.Invoke(this,string.Format("Envoie ACK a {0}",protocol.PacketHeader.ID));
             listener.SendTo(message.ToArray(), endpoint);
         }
     }
