@@ -115,9 +115,10 @@ namespace UDPClient
                 listener.Bind(localEndPoint);
                 while (true)
                 {
-                    EndPoint endpoint = localEndPoint;
+                    IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+                    EndPoint endpoint = sender;
                     int size = listener.ReceiveFrom(bytes, ref endpoint);
-
+                    Log.Invoke(this,string.Format("Recoit Packet"));
                     queue.Enqueue(new Packet(size, bytes, endpoint));
                 }
 
@@ -142,7 +143,7 @@ namespace UDPClient
 
         private void Listen(byte[] buffer, int size, EndPoint endpoint)
         {
-
+            Log.Invoke(this,"Processing Packet");
             StateObject state;
             var protocol = RFBProtocol.Decode(buffer, size);
 
