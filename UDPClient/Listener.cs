@@ -30,11 +30,14 @@ namespace UDPClient
 
         public void UpdateContent(byte[] bytes, int offset, int size)
         {
-            for (int i = 0; i < size; i++)
-                content[i + offset] = bytes[i];
+            if (content[offset] == 0)
+            {
+                for (int i = 0; i < size; i++)
+                    content[i + offset] = bytes[i];
 
-            if (PacketReceived != null)
-                PacketReceived.Invoke(this, new AckEventArgs(offset));
+                if (PacketReceived != null)
+                    PacketReceived.Invoke(this, new AckEventArgs(offset));
+            }
         }
 
         public byte[] Content
@@ -127,7 +130,7 @@ namespace UDPClient
                     {
                         queue.Enqueue(new Packet(size, bytes, endpoint));
                     }
-
+                    listener.N
                 }
 
             }
