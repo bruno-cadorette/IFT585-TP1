@@ -129,7 +129,6 @@ namespace UDPClient
                     {
                         queue.Enqueue(new Packet(size, bytes, endpoint));
                     }
-                    listener.N
                 }
 
             }
