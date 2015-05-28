@@ -31,7 +31,7 @@ namespace UDPClient
     public class UDPClientSender : IUDP, ILogable
     {
         //Properties
-        public string FilePath { get; set; }
+        public string FileName { get; set; }
         public EventHandler<string> Log
         {
             get;
@@ -73,7 +73,7 @@ namespace UDPClient
             m_file = File.ReadAllBytes(path);
             FileSize = m_file.Length;
             fileID = 0;
-            FilePath = path;
+            FileName = Path.GetFileName(path);
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace UDPClient
         {
             Log.Invoke(this, "test");
             //Get byte from file
-            StartTransfer(FilePath);                                    //Start Connection, ask for FileID
+            StartTransfer();                                    //Start Connection, ask for FileID
             int nbSection = m_file.Length / RFBProtocol.NB_BYTE_PER_SECTION;
             var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
             for (int i = 0; i <= nbSection; i++)
@@ -109,9 +109,9 @@ namespace UDPClient
         /// X Byte => File Name
         /// </summary>
         /// <param name="path"></param>
-        private void StartTransfer(string path)
+        private void StartTransfer()
         {
-            string fileName = Path.GetFileName(path);
+            string fileName = Path.GetFileName(FileName);
             byte[] data = dataBytes.Concat(BitConverter.GetBytes(fileID))       //Concat DATA + fileID (0)
                 .Concat(BitConverter.GetBytes(FileSize))
                 .Concat(Encoding.ASCII.GetBytes(fileName)).ToArray();           //Concat FileName

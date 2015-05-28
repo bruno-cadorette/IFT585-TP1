@@ -71,7 +71,7 @@ namespace IFT585_TP1
             }
         }
 
-        private string fileName;
+        private string filePath;
 
 
         private void SelectFileImpl()
@@ -81,7 +81,7 @@ namespace IFT585_TP1
             
             if (result.HasValue && result.Value)
             {
-                fileName = Path.GetFileName(dlg.FileName);
+                filePath = dlg.FileName;
             }
         }
         private void LogAction(string log)
@@ -91,7 +91,7 @@ namespace IFT585_TP1
 
         private void SendFileImpl()
         {
-            var sender = new UDPClientSender(ipAdress, port, fileName);
+            var sender = new UDPClientSender(ipAdress, port, filePath);
             ProgressViewModel = new ProgressViewModel(sender);
             LogAction("Vous envoyez un fichier");
             sender.Resended += (o, e) => LogAction(String.Format("Le packet avec l'offset {0} a été renvoyé", e.OffSet));
