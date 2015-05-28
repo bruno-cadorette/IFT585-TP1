@@ -71,13 +71,17 @@ namespace IFT585_TP1
                 filePath = dlg.FileName;
             }
         }
+        private void LogAction(string log)
+        {
+            Log = (String.Format("{0} : {1}\n", DateTime.Now, log)) + Log;
+        }
 
         private void SendFileImpl()
         {
             var sender = new UDPClientSender(ipAdress, port, filePath);
             ProgressViewModel = new ProgressViewModel(sender);
-            sender.Resended += (o, e) => Log += (String.Format("{0} : Le packet no {1} a été renvoyé\n", DateTime.Now, e.OffSet));
-            sender.Log += (o, e) => Log += e;
+            sender.Resended += (o, e) => LogAction(String.Format("Le packet no {0} a été renvoyé", e.OffSet));
+            sender.Log += (o, message) => LogAction(message);
             sender.SendFile();
         }
 

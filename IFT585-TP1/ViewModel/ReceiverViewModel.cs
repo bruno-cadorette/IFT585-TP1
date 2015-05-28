@@ -80,6 +80,24 @@ namespace IFT585_TP1.ViewModel
             }
         }
 
+        private string log;
+        public string Log
+        {
+            get
+            {
+                return log;
+            }
+            set
+            {
+                SetProperty(ref log, value);
+            }
+        }
+
+        private void LogAction(string log)
+        {
+            Log = (String.Format("{0} : {1}\n", DateTime.Now, log)) + Log;
+        }
+
         private void ObjectCreated(object obj, ObjectEventArgs e)
         {
             Application.Current.Dispatcher.Invoke(() => DownloadingFiles.Add(new ProgressViewModel(e.sObject)));
@@ -96,6 +114,7 @@ namespace IFT585_TP1.ViewModel
                     {
                         listener = new Listener(port);
                         listener.ObjectCreated += ObjectCreated;
+                        listener.Log += (o, message) => LogAction(message);
                         listener.StartListening();
                     });
             });

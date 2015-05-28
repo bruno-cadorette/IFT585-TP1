@@ -121,7 +121,7 @@ namespace UDPClient
             if (protocol.PacketHeader.ID == 0)
             {
                 ++id;
-                Log.Invoke(this, string.Format("New Client {0}",id));
+                Log.Invoke(this, string.Format("Nouveau client numéro {0}",id));
                 state = new StateObject()
                 {
                     FileSize = BitConverter.ToInt32(protocol.Data, 0),
@@ -141,7 +141,7 @@ namespace UDPClient
                 message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.ID));
                 if (protocol.PacketHeader.IsAck)
                 {
-                    Log.Invoke(this, string.Format("Write to file client {0}", protocol.PacketHeader.ID));
+                    Log.Invoke(this, string.Format("Écrire au client numéro {0}", protocol.PacketHeader.ID));
                     File.WriteAllBytes("C:\\Users\\Fred\\Documents\\TEST" + protocol.PacketHeader.ID + ".txt",
                         state.Content);
                 }
