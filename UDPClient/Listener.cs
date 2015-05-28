@@ -80,6 +80,7 @@ namespace UDPClient
         private Queue<Packet> queue;
         private Dictionary<int, StateObject> states;
         Socket listener;
+        //Mutex mtx;
 
 
         public EventHandler<string> Log
@@ -97,6 +98,7 @@ namespace UDPClient
         public Listener(int port)
         {
             localEndPoint = new IPEndPoint(IPAddress.Any, port);
+            //mtx = new Mutex();
             queue = new Queue<Packet>();
             Task.Factory.StartNew(Dequeue);
         }
@@ -118,7 +120,9 @@ namespace UDPClient
                     EndPoint endpoint = localEndPoint;
                     int size = listener.ReceiveFrom(bytes, ref endpoint);
 
-                    queue.Enqueue(new Packet(size, bytes, endpoint));
+                    lock (queue)
+                        queue.Enqueue(new Packet(size, bytes, endpoint));
+
                 }
 
             }
@@ -132,10 +136,14 @@ namespace UDPClient
         {
             while (true)
             {
+             
                 if (queue.Count > 0)
                 {
-                    Packet packet = queue.Dequeue();
-                    Task.Factory.StartNew(() => Listen(packet.bytes, packet.size, packet.endpoint));
+                    lock (queue)
+                    {
+                        Packet packet = queue.Dequeue();
+                        Task.Factory.StartNew(() => Listen(packet.bytes, packet.size, packet.endpoint));
+                    }
                 }
             }
         }
@@ -169,6 +177,7 @@ namespace UDPClient
                 state = states[protocol.PacketHeader.ID];
                 Log.Invoke(this,string.Format("New packet from :{0}, offset: {1}",protocol.PacketHeader.ID,protocol.PacketHeader.Offset));
                 message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.ID));
+                message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.Offset));
                 if (protocol.PacketHeader.IsAck)
                 {
                     Log.Invoke(this, string.Format("Écrire au client numéro {0}", protocol.PacketHeader.ID));
