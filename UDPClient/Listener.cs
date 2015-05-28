@@ -74,12 +74,10 @@ namespace UDPClient
     {
         private int id = 0;
         IPEndPoint localEndPoint;
-        private const int NB_BYTE_PER_SECTION = 2064;
-        private const int FILE_LENGTH = 5;
-        private const int HEADER_SIZE = 9;
         private Queue<Packet> queue;
         private Dictionary<int, StateObject> states;
         Socket listener;
+        private object queueLock = new object();
         //Mutex mtx;
 
 
@@ -105,12 +103,13 @@ namespace UDPClient
 
         public void StartListening()
         {
-            byte[] bytes = new Byte[NB_BYTE_PER_SECTION];
+            byte[] bytes = new Byte[RFBProtocol.NB_BYTE_PER_SECTION + RFBProtocol.HEADER_SIZE];
 
             states = new Dictionary<int, StateObject>();
 
             listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Dgram, ProtocolType.Udp);
+            listener.ReceiveBufferSize = RFBProtocol.NB_BYTE_PER_SECTION + RFBProtocol.HEADER_SIZE;
 
             try
             {
@@ -123,7 +122,7 @@ namespace UDPClient
 
                     
                     Log.Invoke(this,string.Format("Recoit Packet"));
-                    lock (queue)
+                    lock (queueLock)
                     {
                         queue.Enqueue(new Packet(size, bytes, endpoint));
                     }
@@ -144,7 +143,7 @@ namespace UDPClient
              
                 if (queue.Count > 0)
                 {
-                    lock (queue)
+                    lock (queueLock)
                     {
                     Packet packet = queue.Dequeue();
                     Task.Factory.StartNew(() => Listen(packet.bytes, packet.size, packet.endpoint));
