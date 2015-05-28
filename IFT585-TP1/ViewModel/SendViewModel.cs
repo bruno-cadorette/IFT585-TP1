@@ -76,7 +76,8 @@ namespace IFT585_TP1
         {
             var sender = new UDPClientSender(ipAdress, port, filePath);
             ProgressViewModel = new ProgressViewModel(sender);
-            sender.Resended += (o, e) => Log += String.Format("{0} : Le packet no {1} a été renvoyé\n", DateTime.Now, e.OffSet);
+            sender.Resended += (o, e) => Log += (String.Format("{0} : Le packet no {1} a été renvoyé\n", DateTime.Now, e.OffSet));
+            sender.Log += (o, e) => Log += e;
             sender.SendFile();
         }
 

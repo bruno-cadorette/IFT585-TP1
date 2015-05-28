@@ -118,8 +118,8 @@ namespace UDPClient
                 ++id;
                 state = new StateObject()
                 {
-                    FileSize = BitConverter.ToInt32(protocol.Data, RFBProtocol.FILE_LENGTH),
-                    FileName = System.Text.Encoding.Default.GetString(protocol.Data,RFBProtocol.HEADER_SIZE,protocol.Size)
+                    FileSize = BitConverter.ToInt32(protocol.Data, 0),
+                    FileName = System.Text.Encoding.Default.GetString(protocol.Data,4,protocol.Size-4)
                 };
                 states[id] = state;
 

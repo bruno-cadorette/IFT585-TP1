@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ILogable.cs" />
     <Compile Include="IUDP.cs" />
     <Compile Include="Listener.cs" />
     <Compile Include="RFBProtocol.cs" />

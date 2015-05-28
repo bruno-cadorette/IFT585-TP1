@@ -9,7 +9,7 @@
             <ItemsControl ItemsSource="{Binding DownloadingFiles}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ProgressBar Minimum="0" Value="{Binding ProgressBarPercent}" Maximum="{Binding FileSize}" 
+                        <ProgressBar Minimum="0" Value="{Binding ProgressBarPercent, Mode=OneWay}" Maximum="{Binding FileSize}" 
                                      HorizontalAlignment="Left" Height="20" Margin="0,5,0,0" VerticalAlignment="Top" Width="272"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
