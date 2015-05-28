@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Net;
 using UDPClient;
 using System.ComponentModel;
+using IFT585_TP1.ViewModel;
 
 namespace IFT585_TP1
 {
@@ -59,6 +60,7 @@ namespace IFT585_TP1
         }
 
         private string filePath;
+        private Logger logger;
 
 
         private void SelectFileImpl()
@@ -73,14 +75,15 @@ namespace IFT585_TP1
         }
         private void LogAction(string log)
         {
-            Log = (String.Format("{0} : {1}\n", DateTime.Now, log)) + Log;
+            Log = (String.Format("{0} : {1}\n", DateTime.Now.ToString("HH:mm:ss.ffff"), log)) + Log;
         }
 
         private void SendFileImpl()
         {
             var sender = new UDPClientSender(ipAdress, port, filePath);
             ProgressViewModel = new ProgressViewModel(sender);
-            sender.Resended += (o, e) => LogAction(String.Format("Le packet no {0} a été renvoyé", e.OffSet));
+            sender.Resended += (o, e) => LogAction(String.Format("Le packet avec l'offset {0} a été renvoyé", e.OffSet));
+            sender.PacketReceived += (o, e) => LogAction(String.Format("Le ACK avec l'offset {0} a été reçu", e.OffSet));
             sender.Log += (o, message) => LogAction(message);
             sender.SendFile();
         }

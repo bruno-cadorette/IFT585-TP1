@@ -11,7 +11,8 @@
         <TextBox Text="{Binding IPAdress}" HorizontalAlignment="Left" Height="23" Margin="47,98,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
         <Button Command="{Binding SendFile}" Content="ENVOYER" HorizontalAlignment="Left" Margin="52,310,0,0" VerticalAlignment="Top" Width="146" Height="71" FontSize="18" FontWeight="Bold" FontFamily="Segoe WP Black" Background="#FFFF2323"/>
         <ProgressBar Minimum="0" Value="{Binding ProgressViewModel.ProgressBarPercent}" Maximum="{Binding ProgressViewModel.FileSize}" HorizontalAlignment="Left" Height="20" Margin="10,128,0,0" VerticalAlignment="Top" Width="272"/>
-        <TextBox IsReadOnly="True" HorizontalAlignment="Left" Height="128" Margin="10,168,0,0" TextWrapping="Wrap" Text="{Binding Log}" VerticalAlignment="Top" Width="262"/>
+        <TextBox IsReadOnly="True" HorizontalAlignment="Left" Height="128" Margin="10,168,0,0" TextWrapping="Wrap" Text="{Binding Log}" VerticalAlignment="Top" Width="262" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+         ScrollViewer.VerticalScrollBarVisibility="Visible"/>
 
     </Grid>
 </Window>

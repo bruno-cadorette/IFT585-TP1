@@ -18,6 +18,7 @@
         </ScrollViewer>
         <Button Command="{Binding Listen}" Content="Écouter" HorizontalAlignment="Left" Margin="172,10,0,0" VerticalAlignment="Top" Width="80" Height="23"/>
         <Label Content="{Binding OwnIPAdress}" HorizontalAlignment="Left" Margin="257,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="25.1,-2"/>
-        <TextBox HorizontalAlignment="Left" Height="226" Margin="10,37,0,0" TextWrapping="Wrap" Text="{Binding Log}" VerticalAlignment="Top" Width="399"/>
+        <TextBox HorizontalAlignment="Left" Height="226" Margin="10,37,0,0" TextWrapping="Wrap" Text="{Binding Log}" VerticalAlignment="Top" Width="410" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+         ScrollViewer.VerticalScrollBarVisibility="Visible"/>
     </Grid>
 </Window>

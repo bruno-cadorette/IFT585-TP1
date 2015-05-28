@@ -44,19 +44,16 @@ namespace UDPClient
         //Members
         private readonly byte[] ackBytes = { 1 };
         private readonly byte[] dataBytes = { 0 };
-        private const int NB_BYTE_PER_SECTION = 2048;
-        private const int FILE_LENGTH = 5;
-        private const int HEADER = 9;
         private const int WINDOW_SIZE = 15;
         private const long TIMEOUT = 15000;
         private Socket m_socket;
         private IPEndPoint m_endpoint;
         private IPEndPoint listeninEndPoint;
-        private UdpClient udpClient;
         private byte[] m_file;
         private int fileID;
         private int packetSendedNotAck = 0;
         private Dictionary<int, Timer> m_timers;
+        private bool isDone = false;
 
 
         //Threading lock
@@ -66,7 +63,10 @@ namespace UDPClient
         public UDPClientSender(IPAddress addr, int port, string path)
         {
             m_timers = new Dictionary<int, Timer>();
-            m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
+            {
+                SendBufferSize = RFBProtocol.NB_BYTE_PER_SECTION + 20
+            };
             m_endpoint = new IPEndPoint(addr, port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any, 0);
             m_file = File.ReadAllBytes(path);
@@ -85,17 +85,19 @@ namespace UDPClient
             Log.Invoke(this, "test");
             //Get byte from file
             StartTransfer(FilePath);                                    //Start Connection, ask for FileID
-            int nbSection = m_file.Length / NB_BYTE_PER_SECTION;
+            int nbSection = m_file.Length / RFBProtocol.NB_BYTE_PER_SECTION;
             var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
             for (int i = 0; i <= nbSection; i++)
             {
                 while (packetSendedNotAck >= WINDOW_SIZE); //WAIT for ACK
-                SendSectionAsync(i * NB_BYTE_PER_SECTION);
+                SendSectionAsync(i * RFBProtocol.NB_BYTE_PER_SECTION);
                 lock (windowSyncRoot)
                 {
                     packetSendedNotAck++;
                 }
             }
+            isDone = true;
+
         }
 
         /// <summary>
@@ -114,9 +116,10 @@ namespace UDPClient
                 .Concat(Encoding.ASCII.GetBytes(fileName)).ToArray();           //Concat FileName
             m_socket.SendTo(data, m_endpoint);                                              //Send
 
-            var listenerData =  new byte[NB_BYTE_PER_SECTION + 5];
+            var listenerData =  new byte[RFBProtocol.NB_BYTE_PER_SECTION + 5];
             EndPoint endpoint = listeninEndPoint;
             int size = m_socket.ReceiveFrom(listenerData, ref endpoint);
+            Log.Invoke(this, "Premier ACK reçu");
             fileID = BitConverter.ToInt32(listenerData, 1);                //FileID for this file is known
 
         }
@@ -129,7 +132,7 @@ namespace UDPClient
         /// <param name="offSet"></param>
         private void SendSectionAsync(int offSet)
         {
-            var section = m_file.Skip(offSet).Take(NB_BYTE_PER_SECTION).ToList(); // Data
+            var section = m_file.Skip(offSet).Take(RFBProtocol.NB_BYTE_PER_SECTION).ToList(); // Data
             var byteOffset = BitConverter.GetBytes(offSet);
             section.InsertRange(0, byteOffset);                                // OFFSET
             section = BitConverter.GetBytes(fileID).Concat(section).ToList();   // File ID
@@ -154,8 +157,9 @@ namespace UDPClient
             while (true)
             {
 
-                var data = new byte[NB_BYTE_PER_SECTION + HEADER];
-                EndPoint endpoint = listeninEndPoint;
+                var data = new byte[RFBProtocol.NB_BYTE_PER_SECTION + RFBProtocol.HEADER_SIZE];
+                IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+                EndPoint endpoint = sender;
                 int size = m_socket.ReceiveFrom(data, ref endpoint);
                 var protocol = RFBProtocol.Decode(data, RFBProtocol.HEADER_SIZE);
                 if (protocol.PacketHeader.IsAck)
@@ -171,7 +175,7 @@ namespace UDPClient
                         }
                         m_timers[off].Dispose();
                         m_timers.Remove(off);
-                        if (!m_timers.Any())
+                        if (isDone && !m_timers.Any())
                         {
                             SendFinalAck();
                             m_socket.Close();
