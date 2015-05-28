@@ -8,6 +8,7 @@ using System.Net;
 using UDPClient;
 using System.ComponentModel;
 using IFT585_TP1.ViewModel;
+using System.IO;
 
 namespace IFT585_TP1
 {
@@ -30,7 +31,18 @@ namespace IFT585_TP1
             }
         }
 
-        public ProgressViewModel ProgressViewModel { get; set; }
+        ProgressViewModel progressViewModel;
+        public ProgressViewModel ProgressViewModel
+        {
+            get
+            {
+                return progressViewModel;
+            }
+            set
+            {
+                SetProperty(ref progressViewModel, value);
+            }
+        }
 
         private string log;
         public string Log
@@ -59,8 +71,7 @@ namespace IFT585_TP1
             }
         }
 
-        private string filePath;
-        private Logger logger;
+        private string fileName;
 
 
         private void SelectFileImpl()
@@ -70,18 +81,19 @@ namespace IFT585_TP1
             
             if (result.HasValue && result.Value)
             {
-                filePath = dlg.FileName;
+                fileName = Path.GetFileName(dlg.FileName);
             }
         }
         private void LogAction(string log)
         {
-            Log = (String.Format("{0} : {1}\n", DateTime.Now.ToString("HH:mm:ss.ffff"), log)) + Log;
+            Log = (String.Format("{0} : {1}\n", DateTime.Now.ToString("HH:mm:ss ffff"), log)) + Log;
         }
 
         private void SendFileImpl()
         {
-            var sender = new UDPClientSender(ipAdress, port, filePath);
+            var sender = new UDPClientSender(ipAdress, port, fileName);
             ProgressViewModel = new ProgressViewModel(sender);
+            LogAction("Vous envoyez un fichier");
             sender.Resended += (o, e) => LogAction(String.Format("Le packet avec l'offset {0} a été renvoyé", e.OffSet));
             sender.PacketReceived += (o, e) => LogAction(String.Format("Le ACK avec l'offset {0} a été reçu", e.OffSet));
             sender.Log += (o, message) => LogAction(message);

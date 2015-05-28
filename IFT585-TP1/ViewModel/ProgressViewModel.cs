@@ -35,7 +35,7 @@ namespace IFT585_TP1
         public ProgressViewModel(IUDP udp)
         {
             this.udp = udp;
-            this.udp.PacketReceived += (o, e) => ProgressBarPercent = e.OffSet;
+            this.udp.PacketReceived += (o, e) => ProgressBarPercent = Math.Max(ProgressBarPercent,e.OffSet);
         }
     }
 }

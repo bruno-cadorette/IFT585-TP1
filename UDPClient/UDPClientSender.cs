@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -45,7 +46,7 @@ namespace UDPClient
         private readonly byte[] ackBytes = { 1 };
         private readonly byte[] dataBytes = { 0 };
         private const int WINDOW_SIZE = 15;
-        private const long TIMEOUT = 15000;
+        private const long TIMEOUT = 5000;
         private Socket m_socket;
         private IPEndPoint m_endpoint;
         private IPEndPoint listeninEndPoint;
@@ -65,7 +66,7 @@ namespace UDPClient
             m_timers = new Dictionary<int, Timer>();
             m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
             {
-                SendBufferSize = RFBProtocol.NB_BYTE_PER_SECTION + 20
+                DontFragment = true
             };
             m_endpoint = new IPEndPoint(addr, port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any, 0);

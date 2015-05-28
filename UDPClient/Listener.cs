@@ -186,7 +186,7 @@ namespace UDPClient
                 if (protocol.PacketHeader.IsAck)
                 {
                     Log.Invoke(this, string.Format("Écrire au client numéro {0}", protocol.PacketHeader.ID));
-                    File.WriteAllBytes("C:\\Users\\Fred\\Documents\\TEST" + protocol.PacketHeader.ID + ".txt",
+                    File.WriteAllBytes(state.FileName,
                         state.Content);
                 }
                 else
