@@ -65,6 +65,12 @@ namespace UDPClient
         private Dictionary<int, StateObject> states;
         Socket listener;
 
+
+        public EventHandler<string> Log
+        {
+            get;
+            set;
+        }
         public EventHandler<ObjectEventArgs> ObjectCreated { get; set; }
 
         public IEnumerable<StateObject> GetStates()
@@ -89,7 +95,6 @@ namespace UDPClient
             try
             {
                 listener.Bind(localEndPoint);
-
                 while (true)
                 {
                     EndPoint endpoint = localEndPoint;
@@ -116,6 +121,7 @@ namespace UDPClient
             if (protocol.PacketHeader.ID == 0)
             {
                 ++id;
+                Log.Invoke(this, string.Format("New Client {0}",id));
                 state = new StateObject()
                 {
                     FileSize = BitConverter.ToInt32(protocol.Data, 0),
@@ -131,9 +137,14 @@ namespace UDPClient
             else
             {
                 state = states[protocol.PacketHeader.ID];
+                Log.Invoke(this,string.Format("New packet from :{0}, offset: {1}",protocol.PacketHeader.ID,protocol.PacketHeader.Offset));
                 message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.ID));
                 if (protocol.PacketHeader.IsAck)
-                    File.WriteAllBytes("C:\\Users\\Bruno\\Documents\\TEST" + id + ".txt", state.Content);
+                {
+                    Log.Invoke(this, string.Format("Write to file client {0}", protocol.PacketHeader.ID));
+                    File.WriteAllBytes("C:\\Users\\Fred\\Documents\\TEST" + protocol.PacketHeader.ID + ".txt",
+                        state.Content);
+                }
                 else
                     state.UpdateContent(protocol.Data, protocol.PacketHeader.Offset, protocol.Size);
             }
