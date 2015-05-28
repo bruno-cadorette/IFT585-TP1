@@ -112,6 +112,7 @@ namespace IFT585_TP1.ViewModel
             {
                 Task.Factory.StartNew(() =>
                     {
+                        LogAction("On ecoute");
                         listener = new Listener(port);
                         listener.ObjectCreated += ObjectCreated;
                         listener.Log += (o, message) => LogAction(message);

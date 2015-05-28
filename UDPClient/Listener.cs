@@ -112,7 +112,6 @@ namespace UDPClient
 
             listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Dgram, ProtocolType.Udp);
-            listener.ReceiveBufferSize = RFBProtocol.NB_BYTE_PER_SECTION + RFBProtocol.HEADER_SIZE;
 
             try
             {
