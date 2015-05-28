@@ -47,8 +47,8 @@ namespace UDPClient
         private const int NB_BYTE_PER_SECTION = 2048;
         private const int FILE_LENGTH = 5;
         private const int HEADER = 9;
-        private const int WINDOW_SIZE = 30;
-        private const long TIMEOUT = 5000;
+        private const int WINDOW_SIZE = 15;
+        private const long TIMEOUT = 15000;
         private Socket m_socket;
         private IPEndPoint m_endpoint;
         private IPEndPoint listeninEndPoint;
@@ -174,6 +174,8 @@ namespace UDPClient
                         if (!m_timers.Any())
                         {
                             SendFinalAck();
+                            m_socket.Close();
+                            break;
                         }
                     }
                 }
