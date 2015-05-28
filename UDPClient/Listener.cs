@@ -55,6 +55,21 @@ namespace UDPClient
         }
     }
 
+    public class Packet
+    {
+        public byte[] bytes;
+        public int size;
+        public EndPoint endpoint;
+
+        public Packet(int size, byte[] bytes, EndPoint endpoint)
+        {
+            this.size = size;
+            this.bytes = bytes;
+            this.endpoint = endpoint;
+        }
+
+    }
+
     public class Listener
     {
         private int id = 0;
@@ -62,6 +77,7 @@ namespace UDPClient
         private const int NB_BYTE_PER_SECTION = 2064;
         private const int FILE_LENGTH = 5;
         private const int HEADER_SIZE = 9;
+        private Queue<Packet> queue;
         private Dictionary<int, StateObject> states;
         Socket listener;
 
@@ -75,6 +91,8 @@ namespace UDPClient
         public Listener(int port)
         {
             localEndPoint = new IPEndPoint(IPAddress.Any, port);
+            queue = new Queue<Packet>();
+            Task.Factory.StartNew(Dequeue);
         }
 
         public void StartListening()
@@ -95,13 +113,25 @@ namespace UDPClient
                     EndPoint endpoint = localEndPoint;
                     int size = listener.ReceiveFrom(bytes, ref endpoint);
 
-                    Task.Factory.StartNew(() => Listen(bytes, size, endpoint));
+                    queue.Enqueue(new Packet(size, bytes, endpoint));
                 }
 
             }
             catch (Exception e)
             {
                 throw e;
+            }
+        }
+
+        public void Dequeue()
+        {
+            while (true)
+            {
+                if (queue.Count > 0)
+                {
+                    Packet packet = queue.Dequeue();
+                    Task.Factory.StartNew(() => Listen(packet.bytes, packet.size, packet.endpoint));
+                }
             }
         }
 
