@@ -94,8 +94,8 @@ namespace IFT585_TP1
             var sender = new UDPClientSender(ipAdress, port, filePath);
             ProgressViewModel = new ProgressViewModel(sender);
             LogAction("Vous envoyez un fichier");
-            sender.Resended += (o, e) => LogAction(String.Format("Le packet avec l'offset {0} a été renvoyé", e.OffSet));
-            sender.PacketReceived += (o, e) => LogAction(String.Format("Le ACK avec l'offset {0} a été reçu", e.OffSet));
+            //sender.Resended += (o, e) => LogAction(String.Format("Le packet avec l'offset {0} a été renvoyé", e.OffSet));
+           // sender.PacketReceived += (o, e) => LogAction(String.Format("Le ACK avec l'offset {0} a été reçu", e.OffSet));
             sender.Log += (o, message) => LogAction(message);
             sender.SendFile();
         }
