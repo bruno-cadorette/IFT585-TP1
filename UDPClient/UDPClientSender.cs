@@ -74,7 +74,7 @@ namespace UDPClient
             m_file = File.ReadAllBytes(path);
             FileSize = m_file.Length;
             fileID = 0;
-            FilePath = Path.GetFileName(path);
+            FileName = Path.GetFileName(path);
             packets = new Dictionary<int, byte[]>();
         }
 
