@@ -34,7 +34,7 @@ namespace UDPClient
             {
                 for (int i = 0; i < size; i++)
                 {
-                    if (i + offset > content.Length)
+                    if (i + offset >= content.Length)
                         break;
                     content[i + offset] = bytes[i];
                 }
@@ -127,7 +127,6 @@ namespace UDPClient
                     int size = listener.ReceiveFrom(bytes, ref endpoint);
 
                     
-                    Log.Invoke(this,string.Format("Recoit Packet"));
                     lock (queueLock)
                     {
                         queue.Enqueue(new Packet(size, bytes, endpoint));
@@ -137,7 +136,7 @@ namespace UDPClient
             }
             catch (Exception e)
             {
-                throw e;
+                Log.Invoke(this, string.Format("Le client a fermé en sauvage"));
             }
         }
 
@@ -159,7 +158,6 @@ namespace UDPClient
 
         private void Listen(byte[] buffer, int size, EndPoint endpoint)
         {
-            Log.Invoke(this,"Processing Packet");
             StateObject state;
             var protocol = RFBProtocol.Decode(buffer, size);
 
@@ -184,7 +182,7 @@ namespace UDPClient
             else
             {
                 state = states[protocol.PacketHeader.ID];
-                Log.Invoke(this,string.Format("New packet from :{0}, offset: {1}",protocol.PacketHeader.ID,protocol.PacketHeader.Offset));
+                //Log.Invoke(this,string.Format("New packet from :{0}, offset: {1}",protocol.PacketHeader.ID,protocol.PacketHeader.Offset));
                 message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.ID));
                 message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.Offset));
                 if (protocol.PacketHeader.IsAck)
@@ -196,7 +194,6 @@ namespace UDPClient
                 else
                     state.UpdateContent(protocol.Data, protocol.PacketHeader.Offset, protocol.Size);
             }
-            Log.Invoke(this,string.Format("Envoie ACK a {0}",protocol.PacketHeader.ID));
             listener.SendTo(message.ToArray(), endpoint);
         }
     }
