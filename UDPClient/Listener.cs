@@ -33,7 +33,11 @@ namespace UDPClient
             if (content[offset] == 0)
             {
                 for (int i = 0; i < size; i++)
+                {
+                    if (i + offset > content.Length)
+                        break;
                     content[i + offset] = bytes[i];
+                }
 
                 if (PacketReceived != null)
                     PacketReceived.Invoke(this, new AckEventArgs(offset));

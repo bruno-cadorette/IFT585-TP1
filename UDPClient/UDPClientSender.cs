@@ -55,6 +55,7 @@ namespace UDPClient
         private int packetSendedNotAck = 0;
         private Dictionary<int, Timer> m_timers;
         private bool isDone = false;
+        private Dictionary<int,byte[]> packets; 
 
 
         //Threading lock
@@ -74,6 +75,7 @@ namespace UDPClient
             FileSize = m_file.Length;
             fileID = 0;
             FilePath = path;
+            packets = new Dictionary<int, byte[]>();
         }
 
         /// <summary>
@@ -87,11 +89,12 @@ namespace UDPClient
             //Get byte from file
             StartTransfer(FilePath);                                    //Start Connection, ask for FileID
             int nbSection = m_file.Length / RFBProtocol.NB_BYTE_PER_SECTION;
-            var task = Task.Factory.StartNew(Listen);                          //Listen for ACK
-            for (int i = 0; i <= nbSection; i++)
+            var task = Task.Factory.StartNew(Listen);  //Listen for ACK
+            PreparePacket(nbSection);
+            foreach (var packet in packets)
             {
-                while (packetSendedNotAck >= WINDOW_SIZE); //WAIT for ACK
-                SendSectionAsync(i * RFBProtocol.NB_BYTE_PER_SECTION);
+                while (packetSendedNotAck >= WINDOW_SIZE) ; //WAIT for ACK
+                SendSectionAsync(packet);
                 lock (windowSyncRoot)
                 {
                     packetSendedNotAck++;
@@ -125,23 +128,32 @@ namespace UDPClient
 
         }
 
+        private void PreparePacket(int nbSection)
+        {
+            for (int i = 0; i <= nbSection; i++)
+            {
+                int offSet = i*RFBProtocol.NB_BYTE_PER_SECTION;
+                var section = m_file.Skip(offSet).Take(RFBProtocol.NB_BYTE_PER_SECTION).ToList(); // Data
+                var byteOffset = BitConverter.GetBytes(offSet);
+                section.InsertRange(0, byteOffset);                                // OFFSET
+                section = BitConverter.GetBytes(fileID).Concat(section).ToList();   // File ID
+                section = dataBytes.Concat(section).ToList();                       // ACK or DATA
+                packets[offSet] = (section.ToArray());
+
+            }
+        }
 
         /// <summary>
         /// Send a section over the network
         /// </summary>
         /// <param name="file">Byte of the file</param>
         /// <param name="offSet"></param>
-        private void SendSectionAsync(int offSet)
+        private void SendSectionAsync(KeyValuePair<int,byte[]> pair)
         {
-            var section = m_file.Skip(offSet).Take(RFBProtocol.NB_BYTE_PER_SECTION).ToList(); // Data
-            var byteOffset = BitConverter.GetBytes(offSet);
-            section.InsertRange(0, byteOffset);                                // OFFSET
-            section = BitConverter.GetBytes(fileID).Concat(section).ToList();   // File ID
-            section = dataBytes.Concat(section).ToList();                       // ACK or DATA
-            m_socket.SendTo(section.ToArray(), m_endpoint);
+            m_socket.SendTo(pair.Value.ToArray(),pair.Value.Length,SocketFlags.None, m_endpoint);
             Log.Invoke(this, "Vous avez envoyé un paquet");
-            Timer timer = new Timer(Resend, offSet, TIMEOUT, Timeout.Infinite);
-            m_timers[offSet] = timer;
+            Timer timer = new Timer(Resend, pair.Key, TIMEOUT, Timeout.Infinite);
+            m_timers[pair.Key] = timer;
         }
 
         private void Resend(object state)
@@ -150,7 +162,7 @@ namespace UDPClient
             {
                 Resended.Invoke(this, new AckEventArgs((int)state));
             }
-            SendSectionAsync((int)state);
+            SendSectionAsync(new KeyValuePair<int, byte[]>((int)state,packets[(int)state]));
         }
 
         private void Listen()
