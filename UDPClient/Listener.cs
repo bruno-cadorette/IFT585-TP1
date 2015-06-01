@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -116,6 +117,7 @@ namespace UDPClient
 
             listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Dgram, ProtocolType.Udp);
+            listener.ReceiveBufferSize = short.MaxValue;
 
             try
             {
@@ -149,11 +151,20 @@ namespace UDPClient
                 {
                     lock (queueLock)
                     {
-                    Packet packet = queue.Dequeue();
-                    Task.Factory.StartNew(() => Listen(packet.bytes, packet.size, packet.endpoint));
-                }
+                        List<Packet> packets = new List<Packet>(queue);
+                        queue.Clear();
+                        Task.Factory.StartNew(() => Listen(packets));
+                    }
             }
         }
+        }
+
+        private void Listen(List<Packet> packets)
+        {
+            foreach (Packet packet in packets)
+            {
+                Listen(packet.bytes, packet.size, packet.endpoint);
+            }
         }
 
         private void Listen(byte[] buffer, int size, EndPoint endpoint)
