@@ -146,6 +146,7 @@ namespace UDPClient
         /// <param name="offSet"></param>
         private void SendSectionAsync(KeyValuePair<int,byte[]> pair)
         {
+
             m_socket.SendTo(pair.Value.ToArray(),pair.Value.Length,SocketFlags.None, m_endpoint);
             //Log.Invoke(this, "Vous avez envoyé un paquet");
             Timer timer = new Timer(Resend, pair, TIMEOUT, Timeout.Infinite);

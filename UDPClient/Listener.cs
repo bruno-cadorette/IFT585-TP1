@@ -82,7 +82,7 @@ namespace UDPClient
     {
         private int id = 0;
         IPEndPoint localEndPoint;
-        private Queue<Packet> queue;
+        private ConcurrentQueue<Packet> queue;
         private Dictionary<int, StateObject> states;
         Socket listener;
         private object queueLock = new object();
@@ -105,7 +105,7 @@ namespace UDPClient
         {
             localEndPoint = new IPEndPoint(IPAddress.Any, port);
             //mtx = new Mutex();
-            queue = new Queue<Packet>();
+            queue = new ConcurrentQueue<Packet>();
             Task.Factory.StartNew(Dequeue);
         }
 
@@ -117,22 +117,19 @@ namespace UDPClient
 
             listener = new Socket(AddressFamily.InterNetwork,
                 SocketType.Dgram, ProtocolType.Udp);
-            listener.ReceiveBufferSize = short.MaxValue;
+            listener.ReceiveBufferSize = 2000000;
 
             try
             {
                 listener.Bind(localEndPoint);
+                IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+                EndPoint endpoint = sender;
                 while (true)
                 {
-                    IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
-                    EndPoint endpoint = sender;
-                    int size = listener.ReceiveFrom(bytes, ref endpoint);
-
                     
-                    lock (queueLock)
-                    {
-                        queue.Enqueue(new Packet(size, bytes, endpoint));
-                    }
+                    int size = listener.ReceiveFrom(bytes, ref endpoint);
+                    Log.Invoke(this,"Recoit Packet");
+                    queue.Enqueue(new Packet(size, bytes, endpoint));
                 }
 
             }
@@ -146,25 +143,26 @@ namespace UDPClient
         {
             while (true)
             {
-             
-                if (queue.Count > 0)
+                Packet pkt;
+                if (queue.TryDequeue(out pkt))
                 {
-                    lock (queueLock)
-                    {
-                        List<Packet> packets = new List<Packet>(queue);
-                        queue.Clear();
-                        Task.Factory.StartNew(() => Listen(packets));
-                    }
+                    Task.Factory.StartNew(() => Listen(pkt));
+                }
             }
         }
-        }
 
-        private void Listen(List<Packet> packets)
+        private void Listen(Packet[] packets)
         {
             foreach (Packet packet in packets)
             {
                 Listen(packet.bytes, packet.size, packet.endpoint);
             }
+        }
+
+        private void Listen(Packet packet)
+        {
+
+            Listen(packet.bytes, packet.size, packet.endpoint);
         }
 
         private void Listen(byte[] buffer, int size, EndPoint endpoint)
@@ -177,11 +175,11 @@ namespace UDPClient
             if (protocol.PacketHeader.ID == 0)
             {
                 ++id;
-                Log.Invoke(this, string.Format("Nouveau client numéro {0}",id));
+                Log.Invoke(this, string.Format("Nouveau client numéro {0}", id));
                 state = new StateObject()
                 {
                     FileSize = BitConverter.ToInt32(protocol.Data, 0),
-                    FileName = System.Text.Encoding.Default.GetString(protocol.Data,4,protocol.Size-4)
+                    FileName = System.Text.Encoding.Default.GetString(protocol.Data, 4, protocol.Size - 4)
                 };
                 states[id] = state;
 
