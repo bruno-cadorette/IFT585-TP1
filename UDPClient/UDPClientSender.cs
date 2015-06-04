@@ -45,7 +45,7 @@ namespace UDPClient
         //Members
         private readonly byte[] ackBytes = { 1 };
         private readonly byte[] dataBytes = { 0 };
-        private const int WINDOW_SIZE = 5;
+        private const int WINDOW_SIZE = 64;
         private const long TIMEOUT = 1000;
         private Socket m_socket;
         private IPEndPoint m_endpoint;
@@ -116,7 +116,7 @@ namespace UDPClient
                 .Concat(Encoding.ASCII.GetBytes(fileName)).ToArray();           //Concat FileName
             m_socket.SendTo(data, m_endpoint);                                              //Send
 
-            var listenerData =  new byte[RFBProtocol.NB_BYTE_PER_SECTION + 5];
+            var listenerData = new byte[RFBProtocol.NB_BYTE_PER_SECTION + 5];
             EndPoint endpoint = listeninEndPoint;
             int size = m_socket.ReceiveFrom(listenerData, ref endpoint);
             Log.Invoke(this, "Premier ACK reçu");
@@ -124,11 +124,11 @@ namespace UDPClient
 
         }
 
-        private IEnumerable<KeyValuePair<int,byte[]>> PreparePacket(int nbSection)
+        private IEnumerable<KeyValuePair<int, byte[]>> PreparePacket(int nbSection)
         {
             for (int i = 0; i <= nbSection; i++)
             {
-                int offSet = i*RFBProtocol.NB_BYTE_PER_SECTION;
+                int offSet = i * RFBProtocol.NB_BYTE_PER_SECTION;
                 var section = m_file.Skip(offSet).Take(RFBProtocol.NB_BYTE_PER_SECTION).ToList(); // Data
                 var byteOffset = BitConverter.GetBytes(offSet);
                 section.InsertRange(0, byteOffset);                                // OFFSET
@@ -144,10 +144,10 @@ namespace UDPClient
         /// </summary>
         /// <param name="file">Byte of the file</param>
         /// <param name="offSet"></param>
-        private void SendSectionAsync(KeyValuePair<int,byte[]> pair)
+        private void SendSectionAsync(KeyValuePair<int, byte[]> pair)
         {
 
-            m_socket.SendTo(pair.Value.ToArray(),pair.Value.Length,SocketFlags.None, m_endpoint);
+            m_socket.SendTo(pair.Value.ToArray(), pair.Value.Length, SocketFlags.None, m_endpoint);
             //Log.Invoke(this, "Vous avez envoyé un paquet");
             Timer timer = new Timer(Resend, pair, TIMEOUT, Timeout.Infinite);
             m_timers[pair.Key] = timer;
@@ -167,36 +167,40 @@ namespace UDPClient
         {
             while (true)
             {
-
-                var data = new byte[RFBProtocol.NB_BYTE_PER_SECTION + RFBProtocol.HEADER_SIZE];
-                IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
-                EndPoint endpoint = sender;
-                int size = m_socket.ReceiveFrom(data, ref endpoint);
-                var protocol = RFBProtocol.Decode(data, RFBProtocol.HEADER_SIZE);
-                if (protocol.PacketHeader.IsAck)
+                try
                 {
-                    int off = protocol.PacketHeader.Offset;
-                    if (m_timers.ContainsKey(off))
+                    var data = new byte[RFBProtocol.NB_BYTE_PER_SECTION + RFBProtocol.HEADER_SIZE];
+                    IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+                    EndPoint endpoint = sender;
+                    int size = m_socket.ReceiveFrom(data, ref endpoint);
+                    var protocol = RFBProtocol.Decode(data, RFBProtocol.HEADER_SIZE);
+                    if (protocol.PacketHeader.IsAck)
                     {
-                        if (PacketReceived != null)
-                            PacketReceived.Invoke(this, new AckEventArgs(off));
-                        lock (windowSyncRoot)
+                        int off = protocol.PacketHeader.Offset;
+                        if (m_timers.ContainsKey(off))
                         {
-                            packetSendedNotAck--;
-                        }
-                        m_timers[off].Dispose();
-                        m_timers.Remove(off);
-                        if (isDone && !m_timers.Any())
-                        {
-                            SendFinalAck();
-                            m_socket.Close();
-                            break;
+                            if (PacketReceived != null)
+                                PacketReceived.Invoke(this, new AckEventArgs(off));
+                            lock (windowSyncRoot)
+                            {
+                                packetSendedNotAck--;
+                            }
+                            m_timers[off].Dispose();
+                            m_timers.Remove(off);
+                            if (isDone && !m_timers.Any())
+                            {
+                                SendFinalAck();
+                                m_socket.Close();
+                                break;
+                            }
                         }
                     }
                 }
-
+                catch
+                {
+                    Log.Invoke(this, string.Format("Le serveur se fou de notre geule."));
+                }
             }
-
         }
 
         /// <summary>
@@ -210,8 +214,5 @@ namespace UDPClient
             Log.Invoke(this, "Votre fichier a été envoyé, bonne journée!");
         }
 
-
-
-        
     }
 }
