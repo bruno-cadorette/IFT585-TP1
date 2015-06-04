@@ -85,7 +85,6 @@ namespace UDPClient
         private ConcurrentQueue<Packet> queue;
         private Dictionary<int, StateObject> states;
         Socket listener;
-        private object queueLock = new object();
         //Mutex mtx;
 
 
@@ -119,23 +118,23 @@ namespace UDPClient
                 SocketType.Dgram, ProtocolType.Udp);
             listener.ReceiveBufferSize = 2000000;
 
-            try
-            {
                 listener.Bind(localEndPoint);
                 IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
                 EndPoint endpoint = sender;
-                while (true)
+            while (true)
+            {
+                try
                 {
-                    
+
                     int size = listener.ReceiveFrom(bytes, ref endpoint);
-                    Log.Invoke(this,"Recoit Packet");
                     queue.Enqueue(new Packet(size, bytes, endpoint));
                 }
 
-            }
-            catch (Exception e)
-            {
-                Log.Invoke(this, string.Format("Le client a fermé en sauvage"));
+                catch (Exception e)
+                {
+                    Log.Invoke(this, string.Format("Le client a fermé en sauvage"));
+                }
+
             }
         }
 
@@ -196,7 +195,7 @@ namespace UDPClient
                 message.AddRange(BitConverter.GetBytes(protocol.PacketHeader.Offset));
                 if (protocol.PacketHeader.IsAck)
                 {
-                    Log.Invoke(this, string.Format("Écrire au client numéro {0}", protocol.PacketHeader.ID));
+                    Log.Invoke(this, string.Format("Écrire un fichier pour numéro {0}", protocol.PacketHeader.ID));
                     File.WriteAllBytes(state.FileName,
                         state.Content);
                 }
