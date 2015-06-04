@@ -66,7 +66,7 @@ namespace UDPClient
             m_timers = new Dictionary<int, Timer>();
             m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
             {
-                DontFragment = true
+                SendBufferSize = 2000000
             };
             m_endpoint = new IPEndPoint(addr, port);
             listeninEndPoint = new IPEndPoint(IPAddress.Any, 0);
